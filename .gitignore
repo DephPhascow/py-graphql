@@ -1,0 +1,8 @@
+**/__pycache__
+*.txt
+*.json
+.env
+env/
+.vscode/
+models/
+.pypirc
