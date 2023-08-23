@@ -9,7 +9,7 @@ AUTHOR = getenv("AUTHOR")
  
 setup(
     name = "py_simple_graphql",
-    version = "0.1.0",
+    version = "1.2.0",
     keywords = ("graphql", ),
     description = "Simple work with GraphQL",
     long_description = "Simple work with GraphQL",
@@ -22,5 +22,5 @@ setup(
     packages = find_packages(),
     include_package_data = True,
     platforms = "any",
-    install_requires = ["requests"]
+    install_requires = ["requests", 'strenum; python_version < "3.10"']
 )

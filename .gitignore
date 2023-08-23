@@ -10,3 +10,5 @@ pyproject.toml
 py_graphql.egg-info
 dist/
 py_simple_graphql.egg-info/
+build/
+*.jpeg

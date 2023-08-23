@@ -1,7 +1,9 @@
+from py_simple_graphql.enums import QueryType
 from py_simple_graphql.graphql_executor import GraphQLExecutor
 from py_simple_graphql.query import Query
 from py_simple_graphql.graphql_config import GraphQLConfig
 from py_simple_graphql.graphql import GraphQL
+from py_simple_graphql.models import Errors, Error
 from dataclasses import dataclass
 from dotenv import load_dotenv
 from os import getenv
@@ -11,22 +13,16 @@ load_dotenv()
 HTTP = getenv("HTTPS")
 
 query = Query(
-  query_name = "existingTgClient",
+  query_type=QueryType.SEND_FILE,
+  query_name = "findObject",
+  query_request=" x, y, w, h ",
   variables = {
-    "$security": "SecurityInput!",
-    "$botUsername": "String!",
-    "$tgId": "String!"
+    "$image": "Upload!",
+    "$objectType": "FindObjectEnum!",
   }, 
   init_args_from_vars=True
 )
 
-count_user = Query(
-  query_name = "getCountUsers",
-  variables = {
-    "$security": "SecurityInput!"
-  }, 
-  init_args_from_vars=True
-)
 
 gql = GraphQL(gql_config=GraphQLConfig(http=HTTP, DEBUG=True))
 
@@ -35,16 +31,15 @@ class Tmp:
     name: str
 
 executor: GraphQLExecutor = gql.add_query("existingClient", query)
-executor.add_query(count_user)
-res = executor.execute({
-    "security": {
-      "appToken": "123",
-      "token": "302942780",
-    },
-    "botUsername": "example",
-    "tgId": "302942780"
+try:
+  res = executor.execute({
+    "image": "tests/00020-1044244937.jpeg",
+    "objectType": "SMILE"
   })
-print(res)
+  print(res)
+except Errors as e:
+  for a in e.errors:
+    print(a.message)
 
 
 

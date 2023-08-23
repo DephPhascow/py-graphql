@@ -1,3 +1,5 @@
+from .models import Errors, Error
+
 def get_data(data: dict, method_name: str, field: str or list = None):
     if "data" in data:
         data = data["data"]
@@ -10,3 +12,10 @@ def get_data(data: dict, method_name: str, field: str or list = None):
             if field in data:
                 return data[field]
     return None
+
+def check_errors(data: dict):
+    if "errors" in data:
+        errors = []
+        for error in data["errors"]:
+            errors.append(Error(**error))
+        raise Errors(errors)
