@@ -1,9 +1,4 @@
-import sys
-
-if sys.version_info >= (3, 10):
-    from enum import StrEnum
-else:
-    from strenum import StrEnum
+from strenum import StrEnum
     
     
 class QueryType(StrEnum):

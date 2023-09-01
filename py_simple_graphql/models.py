@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 @dataclass
@@ -9,7 +9,9 @@ class Location:
 @dataclass
 class Error:
     message: str
-    locations: List[Location]
+    locations: List[Location] = field(default_factory=list)
+    path: str = ""
+    
     
 class Errors(Exception):
     errors: List[Error]

@@ -13,6 +13,8 @@ class Query:
     
     def __post_init__(self):
         if self.init_args_from_vars:
-            vars = ",".join([f"{key[1:]}: {key}" for key in self.variables.keys()])
+            var_keys = self.variables.keys()
+            vars = ",".join([f"{key[1:]}: {key}" for key in var_keys])
+            vars_code = f"({vars})" if len(var_keys) > 0 else ""
             request = f"{{ { self.query_request } }}" if self.query_request else ""
-            self.query = f"{self.query_name}({vars}) {request}"
+            self.query = f"{self.query_name}{vars_code} {request}"

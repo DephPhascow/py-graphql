@@ -22,7 +22,7 @@ class GraphQLExecutor:
         self.queries.append(query)
         return self
     
-    def execute(self, variables: dict, headers: dict = {}):
+    def execute(self, variables: dict = {}, headers: dict = {}):
         queries = list(filter(lambda query: query.query_type == QueryType.QUERY, self.queries))
         if len(queries) > 0:
             return self.__execute_query(queries, variables, headers)
