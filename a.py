@@ -1,11 +1,11 @@
 import websocket, ssl
 
 from py_simple_graphql.query import Query
-try:
-    import thread
-except ImportError:
-    import _thread as thread
-import time, msgpack
+# try:
+#     import thread
+# except ImportError:
+import _thread as thread
+import time
 import json
 from strenum import StrEnum
 from dataclasses import dataclass, field
@@ -45,12 +45,11 @@ class WSGraphQL:
                 "cert_reqs": ssl.CERT_NONE
             }, 
         }
-        thr = thread.Thread(self.ws.run_forever, args=(*{
+        thr = thread.start_new_thread(self.ws.run_forever, args=(*{
             'sslopt': {
                 "cert_reqs": ssl.CERT_NONE
             }, 
         },) )
-        thr.start()
 
 
     def on_open(self):

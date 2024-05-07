@@ -1,7 +1,7 @@
 from py_simple_graphql.utils import gen_query
 from tests.m_types import Directional
 
-def users_admins():
+def directionals():
   return gen_query(
     name="directionalsDel",
     request="...name",

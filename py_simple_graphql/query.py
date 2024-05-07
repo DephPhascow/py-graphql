@@ -23,5 +23,5 @@ class Query:
             vars = ",".join([f"{key[1:]}: {key}" for key in var_keys])
             vars_code = f"({vars})" if len(var_keys) > 0 else ""
             request = f"{{ { self.query_request } }}" if self.query_request else ""
-            middle = vars_code if self.query_type in [QueryType.QUERY, QueryType.MUTATION] else f" on {self.type_name}"
+            middle = f" on {self.type_name}" if self.query_type == QueryType.FRAGMENT else  vars_code 
             self.query = f"{self.query_name}{middle} {request}"

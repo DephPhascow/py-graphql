@@ -1,52 +1,16 @@
 import asyncio
-import json
+from tests.subscriptions import get_count
+from tests.queres import directionals
 from tests.settings import gql
-from tests.queres import users_admins
-import ssl
-import websockets
 
-# async def main():
-#     executor = gql.add_query("ex", users_admins())
-#     res = await executor.execute()
-#     print(res.filter("directionalsDel", "name_r", "Тура"))
-
-async def subscribe_to_graphql(host: str, port: int):
-    headers = {
-        "Authorization": "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjoie1xuIFwiZXhwXCI6IFwiMjAyNC0wNS0wN1QxMTozNzo0NC44MDg2ODBcIixcbiBcIm9yaWdJYXRcIjogXCIyMDI0LTA1LTA3VDExOjMyOjQ0LjgwODY4MFwiLFxuIFwidGdfaWRcIjogXCIxMjNcIlxufSJ9.iCoCQgjiQOwzK0LU9WpZ3pUy_1gJ1YyTxP0h60gcwJE",
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0',
-        'Upgrade': 'websocket',
-        'Connection': 'Upgrade',
-        'Sec-WebSocket-Key': 'suyuGTgHP89YSDTAad2evQ==',
-        'Sec-WebSocket-Version': '13',
-        'Sec-WebSocket-Extensions': 'permessage-deflate; client_max_window_bits',
-        'Sec-WebSocket-Protocol': 'graphql-transport-ws',
-        'Cookie': 'csrftoken=ZgI4NJJ0sYewCXMo6VuXi8tnGaSjYwoU'
-    }
-    uri = f"wss://{host}/graphql/"  # Замените на ваш адрес GraphQL сервера
-    sslcontext = ssl.create_default_context()
-    sslcontext.check_hostname = False
-    sslcontext.verify_mode = ssl.CERT_NONE    
-    async with websockets.connect(uri, ssl=sslcontext, extra_headers=headers, origin="*", subprotocols=["graphql-ws"]) as websocket:
-        await websocket.send(json.dumps({
-            "id": "1",
-            "type": "connection_init",
-            "payload": {
-                "query": "subscription { count }"
-            }
-        }))
-        # subscription_query = '''
-        # subscription {
-        #     count
-        # }
-        # '''
-        # await websocket.send(subscription_query)
-        
-        while True:
-            response = await websocket.recv()
-            print(response)
-        pass
+def rev(response):
+    print(response)
 
 async def main():
-    await subscribe_to_graphql("telecure.ru", 443)
+    executor = gql.add_query("get_count", get_count(), rev)
+    await executor.execute(variables={"target": 3})
+    executor = gql.add_query("directionals", directionals())
+    res = await executor.execute()
+    print(res)
 
 asyncio.run(main())

@@ -21,11 +21,12 @@ def check_errors(data: dict):
             errors.append(Error(**error))
         raise Errors(errors)
     
-def gen_sub_funct(query_type: QueryType, name: str, request: str, var: dict, require_fragments: List[str] = [], q_words: str = None, to_type: GQLType = None):
+def gen_sub_funct(query_type: QueryType, name: str, request: str, var: dict, require_fragments: List[str] = [], q_words: str = None, to_type: GQLType = None, id: str = None):
     for key in list(var.keys()):
         if key[0] != "$":
             var[f"${key}"] = var.pop(key)
     return Query(query_type=query_type,
+        id=id,
         query_name = name,
         query_request = request,
         variables = var,
@@ -41,6 +42,9 @@ def gen_query(name: str, request: str = "", var: dict = {}, require_fragments: L
 
 def gen_mutate(name: str, request: str = "", var: dict = {}, require_fragments: List[str] = [], q_words: str = None, to_type: GQLType = None):
   return gen_sub_funct(QueryType.MUTATION, name, request, var, require_fragments, q_words, to_type)
+
+def gen_subscription(id: str, name: str, request: str = "", var: dict = {}, require_fragments: List[str] = [], q_words: str = None, to_type: GQLType = None):
+    return gen_sub_funct(QueryType.SUBSCRIPTION, name, request, var, require_fragments, q_words, to_type, id)
 
 def gen_fragment(name: str, type_name: str, request: str):
     return Query(query_type=QueryType.FRAGMENT,

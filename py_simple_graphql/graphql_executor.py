@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+from py_simple_graphql.query_str_builder import QueryStrBuilder
 from py_simple_graphql.returned_types import ReturnedTypes
 from py_simple_graphql.graphql_config import GraphQLConfig
 from py_simple_graphql.query import Query
@@ -9,8 +10,9 @@ from requests import post
 import json
 from py_simple_graphql.logger import Logger
 import os
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Callable, List, Optional
 from py_simple_graphql.requester import Request
+from py_simple_graphql.ws_graphql import WSGraphQL
 if TYPE_CHECKING:
     from py_simple_graphql.auth import Auth
 
@@ -24,11 +26,15 @@ class GraphQLExecutor:
     subscriptions: List[Query] = field(default_factory=list)
     fragments: List[Query] = field(default_factory=list)
     auth: "Auth" = None
-    logger: Logger = Logger()
+    logger: Logger = None
     query_type: QueryType = None
+    on_subscription_message: Optional[Callable] = None
 
     def __post_init__(self):
         self.query_type = self.queries[0].query_type if len(self.queries) > 0 else None
+        
+    def set_logger(self, logger: Logger):
+        self.Logger = Logger
         
     def add_query(self, query: Query):
         if not self.query_type:
@@ -54,6 +60,9 @@ class GraphQLExecutor:
         mutations = list(filter(lambda query: query.query_type == QueryType.SEND_FILE, self.queries))
         if len(mutations) > 0:
             result +=  self.__execute_send_file(mutations, variables, headers)
+        mutations = list(filter(lambda query: query.query_type == QueryType.SUBSCRIPTION, self.queries))
+        if len(mutations) > 0:
+            await self.__execute_subscriptions(mutations, variables, headers)
         return result
         
     async def __request_post(self, url: str, data: dict, headers: dict = {}, ignore_token: bool = False):
@@ -61,7 +70,7 @@ class GraphQLExecutor:
             headers['Authorization'] = f"JWT {self.auth.token.token}"
         if self.gql_config.user_agent:
             headers['User-Agent'] = self.gql_config.user_agent
-        self.logger.log("queres.txt", f"Посылается запрос: {data} с шапкой: {headers}, значение аргументов: {self.auth} {not ignore_token}")
+        self.logger.log(f"Посылается запрос: {data} с шапкой: {headers}, значение аргументов: {self.auth} {not ignore_token}")
         return await Request.post(url, json=data, headers=headers, disable_ssl=self.gql_config.disable_ssl)
     
     def __request_files(self, url: str, data: dict, files: dict, headers: dict = {}):
@@ -73,57 +82,42 @@ class GraphQLExecutor:
             headers['User-Agent'] = self.gql_config.user_agent
         return post(url, data=data, files=files, headers=headers)
     
-    async def __execute_query(self, queries: list[Query], variables: dict, headers: dict = {}, ):
-        dataQuery = ""
-        dataVariables = ""
-        vars = []
-        fragments_str = ""
-        for query in queries:
-            vars += [f"{key}: {value}" for key, value in query.variables.items() if f"{key}: {value}" not in vars]
-            dataQuery += f"{query.query} "
-            fragments_str = '\r\n'.join(
-                [f"fragment {fragment.query}" for req_fragment in query.require_fragments 
-                 for fragment in self.fragments if fragment.query_name == req_fragment]
-            )
-        dataVariables = ", ".join(vars)
-        dataVariables = f"({dataVariables})" if dataVariables != "" else ""
+    async def __execute(self, queries: list[Query], variables: dict, headers: dict = {}, ignore_token: bool = False):
+        query = QueryStrBuilder(queries=queries, fragments=self.fragments).builder(self.name)
         data = {
-            "query": f"{fragments_str}\r\nquery {self.name} {dataVariables} {{ {dataQuery} }}",
+            "query": query,
             "variables": variables,
         }
         if self.gql_config.DEBUG:
-            self.logger.log("queries.txt", json.dumps(data))
-        data = await self.__request_post(self.gql_config.http, data, headers=headers)
+            self.logger.log(json.dumps(data))
+        data = await self.__request_post(self.gql_config.http, data, headers=headers, ignore_token=ignore_token)
         check_errors(data)
         if self.gql_config.DEBUG:
-            self.logger.log("response.txt", json.dumps(data)) 
+            self.logger.log(json.dumps(data)) 
         result = ReturnedTypes()
         return result.load(queries, data)
+    
+    async def __execute_query(self, queries: list[Query], variables: dict, headers: dict = {}, ignore_token: bool = False):
+        return await self.__execute(queries, variables, headers, ignore_token)
     
     async def __execute_mutations(self, mutations: list[Query], variables: dict, headers: dict = {}, ignore_token: bool = False):
         response = []
         for_result = { "data": {} }
         for mutate in mutations:
-            dataVariables = ",".join([f"{key}: {value}" for key, value in mutate.variables.items()])
-            dataVariables = f"({dataVariables})" if dataVariables != "" else ""
-            fragments_str = '\r\n'.join(
-                [f"fragment {fragment.query}" for req_fragment in mutate.require_fragments 
-                 for fragment in self.fragments if fragment.query_name == req_fragment]
-            )
-            data = {
-                "query": f"{fragments_str}\nmutation {self.name} {dataVariables} {{ {mutate.query} }}",
-                "variables": variables,
-            }
-            if self.gql_config.DEBUG:
-                self.logger.log("query.txt", json.dumps(data))
-            res = await self.__request_post(self.gql_config.http, data, headers=headers, ignore_token=ignore_token)
-            check_errors(res)
+            res = await self.__execute([mutate], variables, headers, ignore_token)
             for_result['data'][mutate.query_name] = get_data(res, mutate.query_name)
             if self.gql_config.DEBUG:
-                self.logger.log("response.txt", f'{response}') 
+                self.logger.log(f'{response}') 
         result = ReturnedTypes()
         return result.load(mutations, for_result)
     
+    async def __execute_subscriptions(self, subscriptions: list[Query], variables: dict, headers: dict = {}):
+        if not self.gql_config.ws:
+            raise ValueError("Websocket url not set")
+        async with WSGraphQL(self.gql_config.ws) as ws:
+            for subscription in subscriptions:
+                await ws.execute(subscription, variables, headers, self.on_subscription_message)
+        
     def __execute_send_file(self, mutations: list[Query], variables: dict, headers: dict = {}):
         response = []
         for mutate in mutations:
@@ -152,12 +146,12 @@ class GraphQLExecutor:
                         x: open(image_name, "rb")
                     }
                     if self.gql_config.DEBUG:
-                        self.logger.log("query.txt", json.dumps(data))            
+                        self.logger.log(json.dumps(data))            
                     res = self.__request_files(self.gql_config.http, data=data, files=files, headers=headers).json()
                     check_errors(res)
                     response.append(res)
                     if self.gql_config.DEBUG:
-                        self.logger.log("response.txt", json.dumps(response)) 
+                        self.logger.log(json.dumps(response)) 
             if not found:
                 raise ValueError("File not set")
         return response

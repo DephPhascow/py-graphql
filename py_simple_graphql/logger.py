@@ -1,8 +1,18 @@
+from abc import ABC
+from dataclasses import dataclass
 
-
-class Logger:
+@dataclass
+class Logger(ABC):
+    DEBUG: bool = False
+        
+    def log(self, data: str):
+        pass
     
-    @staticmethod
-    def log(file_name: str, data: any, encoding: str = "utf-8"):
-        with open(file_name, 'a', encoding=encoding) as file:
-            file.write(f"{data}\n")
+@dataclass
+class FileLogger(Logger):
+    file_name: str = "log.txt"
+    encoding: str = "utf-8"
+    def log(self, data: str):
+        if self.DEBUG:
+            with open(self.file_name, 'a', encoding=self.encoding) as file:
+                file.write(f"{data}\n")
