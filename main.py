@@ -26,7 +26,7 @@ async def subscribe_to_graphql(host: str, port: int):
     sslcontext = ssl.create_default_context()
     sslcontext.check_hostname = False
     sslcontext.verify_mode = ssl.CERT_NONE    
-    async with websockets.connect(uri, ssl=sslcontext, extra_headers=headers, origin="*") as websocket:
+    async with websockets.connect(uri, ssl=sslcontext, extra_headers=headers, origin="*", subprotocols=["graphql-ws"]) as websocket:
         await websocket.send(json.dumps({
             "id": "1",
             "type": "connection_init",
