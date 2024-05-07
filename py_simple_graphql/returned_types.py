@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Dict, Any, List
 
-from core.query import Query
-from core.utils import get_data
+from py_simple_graphql.query import Query
+from py_simple_graphql.utils import get_data
 
 @dataclass
 class ReturnedTypes:
@@ -36,3 +36,9 @@ class ReturnedTypes:
     
     def last(self):
         return list(self.values.values())[-1]
+    
+    def filter(self, method_name: str, key: str, value: Any):
+        instance = self.values[method_name]
+        if isinstance(instance, list):
+            return list(filter(lambda x: getattr(x, key) == value, instance))
+        return []

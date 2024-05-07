@@ -6,3 +6,4 @@ class GraphQLConfig:
     ws: str = ""
     DEBUG: bool = False
     user_agent: str = None
+    disable_ssl: bool = False

@@ -1,10 +1,9 @@
 import json
 import os
 from typing import Coroutine, Union
-from .utils import gen_mutate, gen_fragment
+from py_simple_graphql.utils import gen_mutate, gen_fragment
 from dataclasses import dataclass
-from .graphql import GraphQL
-from data.db import UserModel
+from py_simple_graphql.graphql import GraphQL
 from datetime import datetime
 from datetime import timezone
 import asyncio

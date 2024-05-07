@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
-from .graphql_config import GraphQLConfig
-from .graphql_executor import GraphQLExecutor
-from .query import Query
+from py_simple_graphql.graphql_config import GraphQLConfig
+from py_simple_graphql.graphql_executor import GraphQLExecutor
+from py_simple_graphql.query import Query
 from typing import TYPE_CHECKING, List
 if TYPE_CHECKING:
     from .auth import Auth
@@ -16,7 +16,7 @@ class GraphQL:
         self.auth = auth
         await self.auth.request_tokens()
                 
-    async def add_fragment(self, fragment: Query):
+    def add_fragment(self, fragment: Query):
         self.fragments.append(fragment)
                 
     def add_query(self, name: str, query: Query):

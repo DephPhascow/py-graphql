@@ -1,18 +1,18 @@
 from dataclasses import dataclass, field
 
-from core.returned_types import ReturnedTypes
-from .graphql_config import GraphQLConfig
-from .query import Query
-from .enums import QueryType
-from .utils import check_errors, get_data
+from py_simple_graphql.returned_types import ReturnedTypes
+from py_simple_graphql.graphql_config import GraphQLConfig
+from py_simple_graphql.query import Query
+from py_simple_graphql.enums import QueryType
+from py_simple_graphql.utils import check_errors, get_data
 from requests import post
 import json
-from .logger import Logger
+from py_simple_graphql.logger import Logger
 import os
 from typing import TYPE_CHECKING, List
-from .requester import Request
+from py_simple_graphql.requester import Request
 if TYPE_CHECKING:
-    from .auth import Auth
+    from py_simple_graphql.auth import Auth
 
 
 @dataclass
@@ -62,7 +62,7 @@ class GraphQLExecutor:
         if self.gql_config.user_agent:
             headers['User-Agent'] = self.gql_config.user_agent
         self.logger.log("queres.txt", f"Посылается запрос: {data} с шапкой: {headers}, значение аргументов: {self.auth} {not ignore_token}")
-        return await Request.post(url, json=data, headers=headers)
+        return await Request.post(url, json=data, headers=headers, disable_ssl=self.gql_config.disable_ssl)
     
     def __request_files(self, url: str, data: dict, files: dict, headers: dict = {}):
         if "Content-Type" in headers:
