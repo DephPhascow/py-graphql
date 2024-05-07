@@ -1,35 +1,49 @@
-import asyncio
-import websockets
+import websocket, ssl
+try:
+    import thread
+except ImportError:
+    import _thread as thread
+import time, msgpack
 import json
-import ssl
 
-async def subscribe():
-    uri = "wss://telecure.ru/graphql/"  # Замените на ваш адрес GraphQL WebSocket
-    headers = {
-        "Authorization": "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjoie1xuIFwiZXhwXCI6IFwiMjAyNC0wNS0wN1QxMDowODoyNi41MDUzNDhcIixcbiBcIm9yaWdJYXRcIjogXCIyMDI0LTA1LTA3VDEwOjAzOjI2LjUwNTM0OFwiLFxuIFwidGdfaWRcIjogXCIxMjNcIlxufSJ9.vsywwnPPBPACPpUwIwGuYVJfXImUBczU49gGEkC9jLQ"
+headers= {
+        "Authorization": "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjoie1xuIFwiZXhwXCI6IFwiMjAyNC0wNS0wN1QxMTozNzo0NC44MDg2ODBcIixcbiBcIm9yaWdJYXRcIjogXCIyMDI0LTA1LTA3VDExOjMyOjQ0LjgwODY4MFwiLFxuIFwidGdfaWRcIjogXCIxMjNcIlxufSJ9.iCoCQgjiQOwzK0LU9WpZ3pUy_1gJ1YyTxP0h60gcwJE",
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0',
+        'Upgrade': 'websocket',
+        'Connection': 'Upgrade',
+        'Sec-WebSocket-Key': 'suyuGTgHP89YSDTAad2evQ==',
+        'Sec-WebSocket-Version': '13',
+        'Sec-WebSocket-Extensions': 'permessage-deflate; client_max_window_bits',
+        'Sec-WebSocket-Protocol': 'graphql-transport-ws',
+        'Cookie': 'csrftoken=ZgI4NJJ0sYewCXMo6VuXi8tnGaSjYwoU'
     }
-    sslcontext = ssl.create_default_context()
-    sslcontext.check_hostname = False
-    sslcontext.verify_mode = ssl.CERT_NONE
-    async with websockets.connect(uri, ssl=sslcontext, extra_headers=headers) as websocket:
-        # Определение вашего запроса подписки
-        subscription_query = {
-            "query": """
-            subscription {
-              newMessage {
-                id
-                content
-              }
+
+def on_message(ws, message):
+    print(message)
+
+def on_error(ws, error):
+    print(error)
+
+def on_close(a, b, c):
+    print("close")
+
+def on_open(ws):
+    ws.send(json.dumps({
+            "id": "1",
+            "type": "start",
+            "payload": {
+                "query": "subscription { count }"
             }
-            """
-        }
+        }))
 
-        # Отправка запроса подписки
-        await websocket.send(json.dumps(subscription_query))
 
-        # Получение и печать результатов
-        while True:
-            response = await websocket.recv()
-            print(json.loads(response))
-
-asyncio.get_event_loop().run_until_complete(subscribe())
+if __name__ == "__main__":
+    websocket.enableTrace(True)
+    ws = websocket.WebSocketApp("wss://telecure.ru/graphql/",
+                              on_message = on_message,
+                              on_error = on_error,
+                              on_close = on_close,
+                              header=headers,
+                              subprotocols=["graphql-ws"])
+    ws.on_open = on_open
+    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
