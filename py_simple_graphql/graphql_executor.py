@@ -99,23 +99,6 @@ class GraphQLExecutor:
             self.logger.log("response.txt", json.dumps(data)) 
         result = ReturnedTypes()
         return result.load(queries, data)
-        # for query in queries:
-        #     a = get_data(data, query.query_name, query.q_words)
-        #     if query.to_type:
-        #         b = [query.to_type(**item) for item in a] if isinstance(a, list) else query.to_type(**a)
-        #     else:
-        #         b = a
-        #     result.add(query.query_name, b)
-        # return result
-                
-            
-        # result = get_data(data, query.query_name, q_word)
-        # if to_type:
-        #     if isinstance(result, list):
-        #         result = [to_type(**item) for item in result]
-        #     else:
-        #         result = to_type(**result)
-        # return result
     
     async def __execute_mutations(self, mutations: list[Query], variables: dict, headers: dict = {}, ignore_token: bool = False):
         response = []
