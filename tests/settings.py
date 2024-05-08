@@ -1,5 +1,5 @@
 from py_simple_graphql.graphql import GraphQL, GraphQLConfig
-from py_simple_graphql.logger import FileLogger
+from py_simple_graphql.logger import ConsoleLogger, FileLogger
 from tests import fragments
 
 
@@ -14,5 +14,6 @@ gql = GraphQL(
         disable_ssl=True
     )
 )
-gql.set_logger(FileLogger(file_name="log.txt"))
+# gql.set_logger(FileLogger(file_name="log.txt"))
+gql.set_logger(ConsoleLogger())
 gql.add_fragment(fragments.fragment_user())

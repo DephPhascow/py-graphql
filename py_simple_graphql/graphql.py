@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from py_simple_graphql.graphql_config import GraphQLConfig
 from py_simple_graphql.graphql_executor import GraphQLExecutor
 from py_simple_graphql.logger import Logger
-from py_simple_graphql.query import Query
+from py_simple_graphql.query import Query, QueryFragment
 from typing import TYPE_CHECKING, Callable, List, Optional
 if TYPE_CHECKING:
     from .auth import Auth
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class GraphQL:
     gql_config: GraphQLConfig = field(default_factory=GraphQLConfig)
     auth: "Auth" = None
-    fragments: List[Query] = field(default_factory=list)
+    fragments: List[QueryFragment] = field(default_factory=list)
     logger: Logger = field(default_factory=Logger)
     def __post_init__(self):
         self.fragments = []
@@ -31,7 +31,7 @@ class GraphQL:
         await self.auth.request_tokens()
         self.logger.log(f"Получен результат авторизации: {self.auth.token}")
                 
-    def add_fragment(self, fragment: Query):
+    def add_fragment(self, fragment: QueryFragment):
         self.fragments.append(fragment)
         self.logger.log(f"Добавлен фрагмент: {fragment}")
                 

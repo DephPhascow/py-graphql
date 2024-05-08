@@ -16,3 +16,9 @@ class FileLogger(Logger):
         if self.DEBUG:
             with open(self.file_name, 'a', encoding=self.encoding) as file:
                 file.write(f"{data}\n")
+                
+@dataclass
+class ConsoleLogger(Logger):
+    def log(self, data: str):
+        if self.DEBUG:
+            print(data)

@@ -23,5 +23,16 @@ class Query:
             vars = ",".join([f"{key[1:]}: {key}" for key in var_keys])
             vars_code = f"({vars})" if len(var_keys) > 0 else ""
             request = f"{{ { self.query_request } }}" if self.query_request else ""
-            middle = f" on {self.type_name}" if self.query_type == QueryType.FRAGMENT else  vars_code 
-            self.query = f"{self.query_name}{middle} {request}"
+            self.query = f"{self.query_name}{vars_code} {request}"
+            
+@dataclass
+class QueryFragment:
+    query: str = ""
+    type_name: str = ""
+    query_name: str = ""
+    query_request: str = ""
+    init_args_from_vars: bool = False
+    require_fragments: List[str] = field(default_factory=list)
+    def __post_init__(self):
+        if self.init_args_from_vars:
+            self.query = f"{self.query_name} on {self.type_name} {{ { self.query_request } }}"

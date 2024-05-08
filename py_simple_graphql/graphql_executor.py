@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from py_simple_graphql.query_str_builder import QueryStrBuilder
 from py_simple_graphql.returned_types import ReturnedTypes
 from py_simple_graphql.graphql_config import GraphQLConfig
-from py_simple_graphql.query import Query
+from py_simple_graphql.query import Query, QueryFragment
 from py_simple_graphql.enums import QueryType
 from py_simple_graphql.utils import check_errors, get_data
 from requests import post
@@ -22,9 +22,8 @@ class GraphQLExecutor:
     name: str
     gql_config: GraphQLConfig = field(default_factory=GraphQLConfig)
     queries: List[Query] = field(default_factory=list)
-    fragments: List[Query] = field(default_factory=list)
+    fragments: List[QueryFragment] = field(default_factory=list)
     subscriptions: List[Query] = field(default_factory=list)
-    fragments: List[Query] = field(default_factory=list)
     auth: "Auth" = None
     logger: Logger = None
     query_type: QueryType = None
@@ -44,7 +43,7 @@ class GraphQLExecutor:
         self.queries.append(query)
         return self
     
-    def add_fragment(self, fragment: Query):
+    def add_fragment(self, fragment: QueryFragment):
         self.fragments.append(fragment)
     
     async def execute(self, variables: dict = {}, headers: dict = {}, ignore_token: bool = False, ignore_middlewares: List[str] = []):

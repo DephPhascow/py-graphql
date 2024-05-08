@@ -6,4 +6,3 @@ class QueryType(StrEnum):
     MUTATION = 'mutation'
     SEND_FILE = 'send_file'
     SUBSCRIPTION = 'subscription'
-    FRAGMENT = 'fragment'

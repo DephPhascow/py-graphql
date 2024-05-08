@@ -4,7 +4,7 @@ from typing import List
 from py_simple_graphql.gql_type import GQLType
 from py_simple_graphql.models import Errors, Error
 from py_simple_graphql.enums import QueryType
-from py_simple_graphql.query import Query
+from py_simple_graphql.query import Query, QueryFragment
 import jmespath
 
 
@@ -47,7 +47,7 @@ def gen_subscription(id: str, name: str, request: str = "", var: dict = {}, requ
     return gen_sub_funct(QueryType.SUBSCRIPTION, name, request, var, require_fragments, q_words, to_type, id)
 
 def gen_fragment(name: str, type_name: str, request: str):
-    return Query(query_type=QueryType.FRAGMENT,
+    return QueryFragment(
         query_name = name,
         query_request = request,
         type_name = type_name,
