@@ -3,7 +3,7 @@ from tests.m_types import Directional
 
 def directionals():
   return gen_query(
-    name="directionalsDel",
+    name="directionals",
     request="...namer",
     require_fragments = ['namer'],
     to_type=Directional,
