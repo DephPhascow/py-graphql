@@ -4,8 +4,15 @@ from tests.m_types import Directional
 def directionals():
   return gen_query(
     name="directionalsDel",
-    request="...name",
-    require_fragments = ['name'],
+    request="...namer",
+    require_fragments = ['namer'],
     to_type=Directional,
     q_words="data.directionalsDel[:].{name_r: name}"
+  )
+  
+def users():
+  return gen_query(
+    name="users",
+    request="tgId",
+    q_words="data.users[:].tgId"
   )

@@ -43,6 +43,9 @@ def gen_query(name: str, request: str = "", var: dict = {}, require_fragments: L
 def gen_mutate(name: str, request: str = "", var: dict = {}, require_fragments: List[str] = [], q_words: str = None, to_type: GQLType = None):
   return gen_sub_funct(QueryType.MUTATION, name, request, var, require_fragments, q_words, to_type)
 
+def gen_send_file(name: str, request: str = "", var: dict = {}, require_fragments: List[str] = [], q_words: str = None, to_type: GQLType = None):
+  return gen_sub_funct(QueryType.SEND_FILE, name, request, var, require_fragments, q_words, to_type)
+
 def gen_subscription(id: str, name: str, request: str = "", var: dict = {}, require_fragments: List[str] = [], q_words: str = None, to_type: GQLType = None):
     return gen_sub_funct(QueryType.SUBSCRIPTION, name, request, var, require_fragments, q_words, to_type, id)
 

@@ -8,5 +8,5 @@ def get_count():
         "count",
         var={
             "target": "Int!"
-        }
+        },
     )
