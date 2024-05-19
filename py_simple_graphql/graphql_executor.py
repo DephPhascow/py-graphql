@@ -1,18 +1,20 @@
 from dataclasses import dataclass, field
 
-from py_simple_graphql.query_str_builder import QueryStrBuilder
-from py_simple_graphql.returned_types import ReturnedTypes
-from py_simple_graphql.query import Query
-from py_simple_graphql.enums import QueryType
-from py_simple_graphql.utils import check_errors
+from .errors import ValidationError
+
+from .query_str_builder import QueryStrBuilder
+from .returned_types import ReturnedTypes
+from .query import Query
+from .enums import QueryType
+from .utils import check_errors
 from requests import post
 import json
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional
-from py_simple_graphql.requester import Request
-from py_simple_graphql.ws_graphql import WSGraphQL
+from .requester import Request
+from .ws_graphql import WSGraphQL
 if TYPE_CHECKING:
-    from py_simple_graphql.graphql import GraphQL
+    from .graphql import GraphQL
 
 
 @dataclass
@@ -45,37 +47,40 @@ class GraphQLExecutor:
                 raise Exception("Not found middleware")
         raise Exception("Unknown command")
     
-    async def execute(self, variables: dict = {}, headers: dict = {}, ignore_middlewares: List[str] = []):
+    async def execute(self, variables: dict = {}, headers: dict = {}, ignore_middlewares: List[str] = [], on_validation: Optional[Callable] = None):
         self.gql.logger.log(f"Begin request: ({[x.query_name for x in self.queries]}) {variables=}; {headers=}, {ignore_middlewares=}")
         result = ReturnedTypes()
         for middleware in self.gql.middlewares:
             if middleware.name not in ignore_middlewares:
                 self.gql.logger.log(f"Do middleware: {middleware.name}")
-                await middleware.on_before_request(self.query_type)
+                await middleware.on_before_requests(self.query_type)
                 self.gql.logger.log(f"Done middleware: {middleware.name}")
-            
+        self.gql.logger.log(f"Begin request: middleware completed, ignore {ignore_middlewares}")
         queries = list(filter(lambda query: query.query_type == QueryType.QUERY, self.queries))
         if len(queries) > 0:
-            result += await self.__execute_query(queries, variables, headers,)
+            self.gql.logger.log(f"EXECUTE QUERES {len(queries)}: ({[x.query_name for x in queries]}) {variables=}; {headers=}, {ignore_middlewares=}")
+            result += await self.__execute_query(queries, variables, headers, ignore_middlewares=ignore_middlewares, on_validation=on_validation)
+            self.gql.logger.log(f"EXECUTE QUERES: DONE")
         mutations = list(filter(lambda query: query.query_type == QueryType.MUTATION, self.queries))
         if len(mutations) > 0:
-            self.gql.logger.log(f"EXECUTE MUTATIONS {len(mutations)}: ({[x.query_name for x in self.queries]}) {variables=}; {headers=}, {ignore_middlewares=}")
-            result +=  await self.__execute_mutations(mutations, variables, headers, ignore_middlewares)
-            self.gql.logger.log(f"EXECUTE MUTATIONS {len(mutations)} END: ({[x.query_name for x in self.queries]})")
+            self.gql.logger.log(f"EXECUTE MUTATIONS {len(mutations)}: ({[x.query_name for x in mutations]}) {variables=}; {headers=}, {ignore_middlewares=}")
+            result +=  await self.__execute_mutations(mutations, variables, headers, ignore_middlewares, on_validation=on_validation)
+            self.gql.logger.log(f"EXECUTE MUTATIONS: DONE")
         mutations = list(filter(lambda query: query.query_type == QueryType.SEND_FILE, self.queries))
         if len(mutations) > 0:
-            return  self.__execute_send_file(mutations, variables, headers)
+            return  self.__execute_send_file(mutations, variables, headers, on_validation=on_validation)
         mutations = list(filter(lambda query: query.query_type == QueryType.SUBSCRIPTION, self.queries))
         if len(mutations) > 0:
-            await self.__execute_subscriptions(mutations, variables, headers)
+            await self.__execute_subscriptions(mutations, variables, headers, on_validation=on_validation)
             
         for middleware in self.gql.middlewares:
             if middleware.name not in ignore_middlewares:
-                await middleware.on_after_request(self.query_type)        
+                await middleware.on_after_requests(self.query_type)        
                     
         return result
         
     async def __request_post(self, url: str, data: dict, headers: dict = {}, ignore_middlewares: List[str] = []):
+        self.gql.logger.log(f"REQUEST: IGNORE MIDDLEWARES {[x for x in ignore_middlewares]}")
         for middleware in self.gql.middlewares:
             if middleware.name not in ignore_middlewares:
                 headers = {**headers, **await middleware.get_header()}
@@ -91,7 +96,7 @@ class GraphQLExecutor:
             }
         return post(url, data=data, files=files, headers=headers)
     
-    async def __execute(self, queries: list[Query], variables: dict, headers: dict = {}, ignore_middlewares: List[str] = []):
+    async def __execute(self, queries: list[Query], variables: dict, headers: dict = {}, ignore_middlewares: List[str] = [], on_validation: Optional[Callable] = None):
         query = QueryStrBuilder(queries=queries, fragments=self.gql.fragments).builder(self.name)
         data = {
             "query": query,
@@ -100,27 +105,30 @@ class GraphQLExecutor:
         data = await self.__request_post(self.gql.gql_config.http, data, headers=headers, ignore_middlewares=ignore_middlewares)
         check_errors(data)
         result = ReturnedTypes()
+        if on_validation:
+            if not await on_validation(data):
+                raise ValidationError(f"Validation error at {data}")
         return result.load(queries, data)
     
-    async def __execute_query(self, queries: list[Query], variables: dict, headers: dict = {}, ignore_middlewares: List[str] = []):
-        return await self.__execute(queries, variables, headers, ignore_middlewares)
+    async def __execute_query(self, queries: list[Query], variables: dict, headers: dict = {}, ignore_middlewares: List[str] = [], on_validation: Optional[Callable] = None):
+        return await self.__execute(queries, variables, headers, ignore_middlewares, on_validation=on_validation)
     
-    async def __execute_mutations(self, mutations: list[Query], variables: dict, headers: dict = {}, ignore_middlewares: List[str] = []):
+    async def __execute_mutations(self, mutations: list[Query], variables: dict, headers: dict = {}, ignore_middlewares: List[str] = [], on_validation: Optional[Callable] = None):
         result = ReturnedTypes()
         for mutate in mutations:
-            result += await self.__execute([mutate], variables, headers, ignore_middlewares)
+            result += await self.__execute([mutate], variables, headers, ignore_middlewares, on_validation=on_validation)
             self.gql.logger.log(f"EXECUTE MUTATIONS {mutate.query_name}: {result}")
         self.gql.logger.log(f"EXECUTE MUTATIONS DONE: {result}")
         return result
     
-    async def __execute_subscriptions(self, subscriptions: list[Query], variables: dict, headers: dict = {}):
+    async def __execute_subscriptions(self, subscriptions: list[Query], variables: dict, headers: dict = {}, on_validation: Optional[Callable] = None):
         if not self.gql.gql_config.ws:
             raise ValueError("Websocket url not set")
         async with WSGraphQL(self.gql.gql_config.ws) as ws:
             for subscription in subscriptions:
                 await ws.execute(subscription, variables, headers, self.on_subscription_message)
         
-    def __execute_send_file(self, mutations: list[Query], variables: dict, headers: dict = {}):
+    def __execute_send_file(self, mutations: list[Query], variables: dict, headers: dict = {}, on_validation: Optional[Callable] = None):
         response = []
         for mutate in mutations:
             dataVariables = ",".join([f"{key}: {value}" for key, value in mutate.variables.items()])

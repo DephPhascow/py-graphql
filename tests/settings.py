@@ -1,6 +1,6 @@
 from py_simple_graphql.graphql import GraphQL, GraphQLConfig
 from py_simple_graphql.logger import ConsoleLogger, FileLogger
-from py_simple_graphql.auth_middleware import AuthMiddleware
+from py_simple_graphql.middlewares.auth_middleware import AuthMiddleware
 from tests import fragments
 import asyncio
 
@@ -16,10 +16,7 @@ gql = GraphQL(
     )
 )
 
-async def init(gql: GraphQL):
-    await gql.add_middleware(AuthMiddleware(gql=gql, name="auth"))
-    gql.set_logger(FileLogger(file_name="log.txt"))
-    # gql.set_logger(ConsoleLogger())
-    # gql.add_fragment(fragments.fragment_user())
+gql.add_middleware(AuthMiddleware(gql=gql, name="auth"))
+gql.set_logger(FileLogger(file_name="gql-log.txt"))
     
-asyncio.run(init(gql))
+asyncio.run(gql.init())

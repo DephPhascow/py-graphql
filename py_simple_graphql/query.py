@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from py_simple_graphql.gql_type import GQLType
-from py_simple_graphql.enums import QueryType
+from .gql_type import GQLType
+from .enums import QueryType
 
 @dataclass
 class Query:

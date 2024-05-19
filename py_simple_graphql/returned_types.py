@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Dict, Any, List
 
-from py_simple_graphql.query import Query
-from py_simple_graphql.utils import get_data
+from .query import Query
+from .utils import get_data
 
 @dataclass
 class ReturnedTypes:
@@ -11,6 +11,12 @@ class ReturnedTypes:
     def __getitem__(self, key: str):
         if key in self.values:
             return self.values[key]
+        
+    def __iter__(self):
+        return iter(self.values.values())
+    
+    def keys(self):
+        return self.values.keys()
         
     def __add__(self, other: "ReturnedTypes"):
         if not isinstance(other, ReturnedTypes):

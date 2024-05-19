@@ -13,16 +13,8 @@ async def main():
     await executor.execute(variables={"target": 3}, ignore_middlewares=['auth'])
     executor = gql.add_query("users", users())
     auth = executor['middleware__auth']
-    await auth.set_data("302942780", "123") 
+    await auth.set_data("302942780", "6ab832b9-b20d-4ec5-9b3b-ad9c1376a8e1", None, None, None, None) 
     res = await executor.execute()
-    print(res)
-    token = auth.token
-    auth.load(token)
-    res = await executor.execute()
-    # res = await executor.execute(variables={
-    #     "img": "tests\\1.jpeg",
-    #     "name": "esa"
-    # })
     print(res)
 
 asyncio.run(main())

@@ -1,12 +1,12 @@
+from copy import copy
 from dataclasses import dataclass, field
-from py_simple_graphql.graphql_config import GraphQLConfig
-from py_simple_graphql.graphql_executor import GraphQLExecutor
-from py_simple_graphql.logger import Logger
-from py_simple_graphql.query import Query, QueryFragment
+from .graphql_config import GraphQLConfig
+from .graphql_executor import GraphQLExecutor
+from .logger import Logger
+from .query import Query, QueryFragment
 from typing import TYPE_CHECKING, Callable, List, Optional
 if TYPE_CHECKING:
-    from .auth import Auth
-    from py_simple_graphql.middleware import Middleware
+    from .middlewares.middleware import Middleware
 
 @dataclass
 class GraphQL:
@@ -26,16 +26,19 @@ class GraphQL:
         self.logger.DEBUG = self.gql_config.DEBUG
         self.logger.log(f"Установился логгер на {self.gql_config.DEBUG}")
                 
-    async def add_middleware(self, middleware: "Middleware"):
+    def add_middleware(self, middleware: "Middleware"):
         self.middlewares.append(middleware)
-        await middleware.on_startup()
+        
+    async def init(self):
+        for middleware in self.middlewares:
+            await middleware.on_startup()
                 
     def add_fragment(self, fragment: QueryFragment):
         self.fragments.append(fragment)
         self.logger.log(f"Добавлен фрагмент: {fragment}")
-                
+
     def add_query(self, name: str, query: Query, on_subscription_message: Optional[Callable] = None):
-        return GraphQLExecutor(name=name, queries=[query], gql=self, on_subscription_message=on_subscription_message)
+        return GraphQLExecutor(name=name, queries=[query], gql=copy(self), on_subscription_message=on_subscription_message)
     
     # async def __del__(self):
     #     for middleware in self.middlewares:

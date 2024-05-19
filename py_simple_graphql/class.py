@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from py_simple_graphql.query import Query
+from .query import Query
 
 @dataclass
 class SubscriptionListener:

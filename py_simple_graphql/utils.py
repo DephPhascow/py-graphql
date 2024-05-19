@@ -1,10 +1,10 @@
 import json
 from typing import List
 
-from py_simple_graphql.gql_type import GQLType
-from py_simple_graphql.models import Errors, Error
-from py_simple_graphql.enums import QueryType
-from py_simple_graphql.query import Query, QueryFragment
+from .gql_type import GQLType
+from .models import Errors, Error
+from .enums import QueryType
+from .query import Query, QueryFragment
 import jmespath
 
 

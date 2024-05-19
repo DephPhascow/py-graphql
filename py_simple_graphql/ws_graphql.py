@@ -1,12 +1,12 @@
 import json
-from py_simple_graphql.query import Query
-from py_simple_graphql.query_str_builder import QueryStrBuilder
+from .query import Query
+from .query_str_builder import QueryStrBuilder
 import ssl
 import websockets
 from strenum import StrEnum
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
-from py_simple_graphql.enums import QueryType
+from .enums import QueryType
 
 class WSReceiveMessageType(StrEnum):
     DATA = "data"
