@@ -12,3 +12,4 @@ dist/
 py_simple_graphql.egg-info/
 build/
 *.jpeg
+!requirements.txt

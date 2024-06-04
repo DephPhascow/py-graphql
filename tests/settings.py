@@ -3,9 +3,13 @@ from py_simple_graphql.logger import ConsoleLogger, FileLogger
 from py_simple_graphql.middlewares.auth_middleware import AuthMiddleware
 from tests import fragments
 import asyncio
+from dotenv import load_dotenv
+import os
 
-GRAPHQL_URL = "https://telecure.ru/graphql/"
-WS_URL = "wss://telecure.ru/graphql/"
+load_dotenv(override=True)
+
+GRAPHQL_URL = os.getenv("GRAPHQL_URL")
+WS_URL = os.getenv("WS_URL")
 
 gql = GraphQL(
     gql_config=GraphQLConfig(
@@ -16,7 +20,10 @@ gql = GraphQL(
     )
 )
 
-gql.add_middleware(AuthMiddleware(gql=gql, name="auth"))
+async def on_save(token, login):
+    pass
+
+gql.add_middleware(AuthMiddleware(gql=gql, name="auth", on_save=on_save))
 gql.set_logger(FileLogger(file_name="gql-log.txt"))
     
 asyncio.run(gql.init())

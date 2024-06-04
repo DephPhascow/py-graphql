@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
  
 setup(
     name = "py_simple_graphql",
-    version = "1.2.3",
+    version = "1.1.1",
     keywords = ("graphql", ),
     description = "Simple work with GraphQL",
     long_description = "Simple work with GraphQL",
@@ -16,5 +16,5 @@ setup(
     packages = find_packages(),
     include_package_data = True,
     platforms = "any",
-    install_requires = ["requests", 'strenum']
+    install_requires = ["requests", 'aiohttp', 'strenum', 'jmespath']
 )

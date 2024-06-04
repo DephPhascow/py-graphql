@@ -2,11 +2,8 @@
 from py_simple_graphql.utils import gen_subscription
 
 
-def get_count():
+def my_name():
     return gen_subscription(
-        "getCount",
-        "count",
-        var={
-            "target": "Int!"
-        },
+        id="whatsMyName",
+        name="whatsMyName"
     )

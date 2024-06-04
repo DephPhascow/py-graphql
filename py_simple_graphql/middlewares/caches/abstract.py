@@ -3,8 +3,8 @@ from ..caches.enums import CacheType
 from ...middlewares.middleware import Middleware
 from dataclasses import dataclass
 
-from graphql.core.query import Query
-from graphql.core.returned_types import ReturnedTypes
+from ...query import Query
+from ...returned_types import ReturnedTypes
 
 @dataclass
 class CacheMiddleware(Middleware):

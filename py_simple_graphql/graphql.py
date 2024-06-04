@@ -37,8 +37,8 @@ class GraphQL:
         self.fragments.append(fragment)
         self.logger.log(f"Добавлен фрагмент: {fragment}")
 
-    def add_query(self, name: str, query: Query, on_subscription_message: Optional[Callable] = None):
-        return GraphQLExecutor(name=name, queries=[query], gql=copy(self), on_subscription_message=on_subscription_message)
+    def add_query(self, name: str, query: Query, on_subscription_message: Optional[Callable] = None, use_old_instance: bool = False):
+        return GraphQLExecutor(name=name, queries=[query], gql=copy(self) if not use_old_instance else self, on_subscription_message=on_subscription_message)
     
     # async def __del__(self):
     #     for middleware in self.middlewares:

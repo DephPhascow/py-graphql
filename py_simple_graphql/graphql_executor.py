@@ -1,7 +1,5 @@
 from dataclasses import dataclass, field
-
 from .errors import ValidationError
-
 from .query_str_builder import QueryStrBuilder
 from .returned_types import ReturnedTypes
 from .query import Query
@@ -68,7 +66,7 @@ class GraphQLExecutor:
             self.gql.logger.log(f"EXECUTE MUTATIONS: DONE")
         mutations = list(filter(lambda query: query.query_type == QueryType.SEND_FILE, self.queries))
         if len(mutations) > 0:
-            return  self.__execute_send_file(mutations, variables, headers, on_validation=on_validation)
+            return  await self.__execute_send_file(mutations, variables, headers, on_validation=on_validation)
         mutations = list(filter(lambda query: query.query_type == QueryType.SUBSCRIPTION, self.queries))
         if len(mutations) > 0:
             await self.__execute_subscriptions(mutations, variables, headers, on_validation=on_validation)
@@ -89,11 +87,11 @@ class GraphQLExecutor:
         self.gql.logger.log(f"RESPONSE: {result=}")
         return result
     
-    def __request_files(self, url: str, data: dict, files: dict, headers: dict = {}):
-        if "Content-Type" in headers:
-            headers = headers | {
-                "Content-Type": "multipart/form-data"
-            }
+    async def __request_files(self, url: str, data: dict, files: dict, headers: dict = {}, ignore_middlewares: List[str] = []):
+        self.gql.logger.log(f"REQUEST: IGNORE MIDDLEWARES {[x for x in ignore_middlewares]}")
+        for middleware in self.gql.middlewares:
+            if middleware.name not in ignore_middlewares:
+                headers = headers | await middleware.get_header()        
         return post(url, data=data, files=files, headers=headers)
     
     async def __execute(self, queries: list[Query], variables: dict, headers: dict = {}, ignore_middlewares: List[str] = [], on_validation: Optional[Callable] = None):
@@ -128,7 +126,7 @@ class GraphQLExecutor:
             for subscription in subscriptions:
                 await ws.execute(subscription, variables, headers, self.on_subscription_message)
         
-    def __execute_send_file(self, mutations: list[Query], variables: dict, headers: dict = {}, on_validation: Optional[Callable] = None):
+    async def __execute_send_file(self, mutations: list[Query], variables: dict, headers: dict = {}, on_validation: Optional[Callable] = None):
         response = []
         for mutate in mutations:
             dataVariables = ",".join([f"{key}: {value}" for key, value in mutate.variables.items()])
@@ -154,8 +152,9 @@ class GraphQLExecutor:
                     }
                     files = {
                         x: open(image_name, "rb")
-                    }           
-                    res = self.__request_files(self.gql.gql_config.http, data=data, files=files, headers=headers).json()
+                    }
+                    res = (await self.__request_files(self.gql.gql_config.http, data=data, files=files, headers=headers))
+                    res = res.json()
                     check_errors(res)
                     response.append(res)
             if not found:

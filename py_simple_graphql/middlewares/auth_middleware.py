@@ -61,7 +61,7 @@ def refresh_token():
   
 def get_password_or_create():
   return gen_mutate(
-    name="getPasswordOrCreate",
+    name="getOrCreatePassword",
     var={
         "tgId": "String!",
         "firstName": "String!",
@@ -141,7 +141,7 @@ class AuthMiddleware(Middleware):
         return True
     
     async def request_password(self):
-        exec = self.gql.add_query("getPasswordOrCreate", get_password_or_create())
+        exec = self.gql.add_query("getPasswordOrCreate", get_password_or_create(), use_old_instance=True)
         res = await exec.execute(variables={
             "tgId": self.login,
             "firstName": f'Не указано ### чет придумать',
@@ -151,7 +151,7 @@ class AuthMiddleware(Middleware):
     async def request_tokens(self,):
         try:
             self.gql.logger.log(f"Middleware {self.name}: Begin request new token data")
-            exec = self.gql.add_query("auth_token", auth_token())
+            exec = self.gql.add_query("auth_token", auth_token(), use_old_instance=True)
             res = await exec.execute(variables={
                     "tgId": self.login,
                     "password": self.password,
@@ -171,8 +171,7 @@ class AuthMiddleware(Middleware):
     async def process(self, ):
         if not self.token.token_exp:
             await self.request_tokens()
-            if self.on_save:
-                await self.on_save(self.token, self.login)
+            await self.on_save(self.token, self.login)
             return
         now = datetime.now(self.tz)
         self.token.token_exp = self.token.token_exp.replace(tzinfo=self.tz)
@@ -183,7 +182,7 @@ class AuthMiddleware(Middleware):
                 try:
                     delta_days = self.token.refresh_token_exp - now
                     revoke = delta_days.days < 1
-                    exec = self.gql.add_query("refresh_token", refresh_token())
+                    exec = self.gql.add_query("refresh_token", refresh_token(), use_old_instance=True)
                     response = await exec.execute(
                         variables={
                             "refreshToken": self.token.refresh_token,
